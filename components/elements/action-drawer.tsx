@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import useDeviceType from "@/hooks/useDeviceType";
-import useActionDrawerStore from "@/store/actionDrawerStore";
+import useActionDrawerStore from "@/store/useActionDrawerStore";
 import { cn } from "@/lib/utils";
 
 type ActionButtonProps = {
