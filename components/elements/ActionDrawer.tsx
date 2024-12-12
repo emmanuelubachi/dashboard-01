@@ -3,7 +3,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useActionDrawerStore from "@/store/useActionDrawerStore";
-import useDeviceType from "@/hooks/useDeviceType";
 import { Cross2Icon } from "@radix-ui/react-icons";
 
 import { cn } from "@/lib/utils";
@@ -22,7 +21,7 @@ const ActionDrawer = ({
   children: React.ReactNode;
   from?: "left" | "right" | "bottom" | "top";
 }) => {
-  const { isDrawerOpen, closeDrawer } = useActionDrawerStore();
+  const { isDrawerOpen } = useActionDrawerStore();
 
   const directionVariants = {
     bottom: { y: "100%", opacity: 0 },
@@ -69,6 +68,7 @@ const ActionDrawerTrigger = ({
     <Button
       onClick={toggleDrawer}
       variant={variant}
+      size={size}
       className={cn("focus:outline-none", className)}
     >
       {children}
