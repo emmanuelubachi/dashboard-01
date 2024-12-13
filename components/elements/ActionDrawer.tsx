@@ -1,34 +1,33 @@
-"use client";
+'use client'
 
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import useActionDrawerStore from "@/store/useActionDrawerStore";
-import { Cross2Icon } from "@radix-ui/react-icons";
-
-import { cn } from "@/lib/utils";
-import { Button, ButtonProps } from "@/components/ui/button";
+import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Cross2Icon } from '@radix-ui/react-icons'
+import { Button, ButtonProps } from '@/components/ui/button'
+import useActionDrawerStore from '@/store/useActionDrawerStore'
+import { cn } from '@/lib/utils'
 
 const sharedButtonStyles =
-  "gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95";
+  'gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95'
 
 // ---- Components ----
 
 // Root Drawer
 const ActionDrawer = ({
   children,
-  from = "left",
+  from = 'left',
 }: {
-  children: React.ReactNode;
-  from?: "left" | "right" | "bottom" | "top";
+  children: React.ReactNode
+  from?: 'left' | 'right' | 'bottom' | 'top'
 }) => {
-  const { isDrawerOpen } = useActionDrawerStore();
+  const { isDrawerOpen } = useActionDrawerStore()
 
   const directionVariants = {
-    bottom: { y: "100%", opacity: 0 },
-    top: { y: "-100%", opacity: 0 },
-    left: { x: "-100%", opacity: 0 },
-    right: { x: "100%", opacity: 0 },
-  };
+    bottom: { y: '100%', opacity: 0 },
+    top: { y: '-100%', opacity: 0 },
+    left: { x: '-100%', opacity: 0 },
+    right: { x: '100%', opacity: 0 },
+  }
 
   return (
     <AnimatePresence>
@@ -36,53 +35,53 @@ const ActionDrawer = ({
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50">
           <ActionDrawerOverlay />
           <motion.div
-            className="fixed w-fit inset-0 z-50"
+            className="fixed inset-0 z-50 w-fit"
             initial={directionVariants[from]}
             animate={{ x: 0, y: 0, opacity: 1 }}
             exit={directionVariants[from]}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           >
             {children}
           </motion.div>
         </div>
       )}
     </AnimatePresence>
-  );
-};
+  )
+}
 
 // Trigger Button
 const ActionDrawerTrigger = ({
   children,
   className,
-  variant = "default",
-  size = "default",
+  variant = 'default',
+  size = 'default',
 }: {
-  children: React.ReactNode;
-  className?: string;
-  variant?: ButtonProps["variant"];
-  size?: ButtonProps["size"];
+  children: React.ReactNode
+  className?: string
+  variant?: ButtonProps['variant']
+  size?: ButtonProps['size']
 }) => {
-  const { toggleDrawer } = useActionDrawerStore();
+  const { toggleDrawer } = useActionDrawerStore()
 
   return (
     <Button
       onClick={toggleDrawer}
       variant={variant}
       size={size}
-      className={cn("focus:outline-none", className)}
+      className={cn('focus:outline-none', className)}
     >
       {children}
     </Button>
-  );
-};
+  )
+}
 
 // Overlay
 const ActionDrawerOverlay = () => {
-  const { closeDrawer } = useActionDrawerStore();
+  const { closeDrawer } = useActionDrawerStore()
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/50 z-40"
+      className="fixed inset-0 z-40 bg-black/50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -90,74 +89,74 @@ const ActionDrawerOverlay = () => {
       aria-hidden="true"
       onClick={closeDrawer}
     />
-  );
-};
+  )
+}
 
 // Content
 const ActionDrawerContent = ({
   children,
-  className = "",
+  className = '',
 }: {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }) => {
   return (
     <div
       className={cn(
-        "bg-background shadow-lg p-4 overflow-y-auto focus:outline-none",
+        'overflow-y-auto bg-background p-4 shadow-lg focus:outline-none',
         className
       )}
       tabIndex={-1} // To enable focus trapping later
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
 // Header
 const ActionDrawerHeader = ({
   children,
-  className = "",
+  className = '',
 }: {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }) => (
-  <div className={cn("p-4 font-semibold text-lg", className)}>{children}</div>
-);
+  <div className={cn('py-4 text-lg font-semibold', className)}>{children}</div>
+)
 
 // Footer
 const ActionDrawerFooter = ({
   children,
-  className = "",
+  className = '',
 }: {
-  children: React.ReactNode;
-  className?: string;
-}) => <div className={cn("p-4 mt-auto", className)}>{children}</div>;
+  children: React.ReactNode
+  className?: string
+}) => <div className={cn('mt-auto p-4', className)}>{children}</div>
 
 // Close Button
 const ActionDrawerClose = ({
   className,
-  variant = "outline",
-  size = "icon",
+  variant = 'outline',
+  size = 'icon',
 }: {
-  className?: string;
-  variant?: ButtonProps["variant"];
-  size?: ButtonProps["size"];
+  className?: string
+  variant?: ButtonProps['variant']
+  size?: ButtonProps['size']
 }) => {
-  const { closeDrawer } = useActionDrawerStore();
+  const { closeDrawer } = useActionDrawerStore()
 
   return (
     <Button
       onClick={closeDrawer}
       variant={variant}
       size={size}
-      className={cn("focus:outline-none", sharedButtonStyles, className)}
+      className={cn('focus:outline-none', sharedButtonStyles, className)}
     >
       <Cross2Icon className="h-4 w-4" />
       <span className="sr-only">Close</span>
     </Button>
-  );
-};
+  )
+}
 
 // ---- Export All Components ----
 export {
@@ -168,7 +167,7 @@ export {
   ActionDrawerHeader,
   ActionDrawerFooter,
   ActionDrawerClose,
-};
+}
 
 // "use client";
 
