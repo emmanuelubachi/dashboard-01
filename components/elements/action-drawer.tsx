@@ -10,7 +10,7 @@ import useActionDrawerStore from '@/store/useActionDrawerStore'
 import { cn } from '@/lib/utils'
 
 const sharedButtonStyles =
-  'gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95'
+  'gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-90'
 
 // ---- Components ----
 
@@ -106,7 +106,7 @@ const ActionDrawerTrigger = ({
       onClick={handleClick}
       variant={variant}
       size={size}
-      className={cn('focus:outline-none', className)}
+      className={cn('focus:outline-none', sharedButtonStyles, className)}
     >
       {children}
     </Button>
@@ -169,7 +169,9 @@ const ActionDrawerContent = ({
         }
       }
 
-      firstElement.focus()
+      if (firstElement) {
+        firstElement.focus()
+      }
       currentRef.addEventListener('keydown', handleTabKey)
 
       return () => {
