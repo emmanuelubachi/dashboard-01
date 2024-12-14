@@ -8,13 +8,7 @@ export default function Page() {
 
   const openSecondDrawer = () => {
     toggleDrawer()
-    setDrawerContent(
-      <div className="h-screen w-80 space-y-4 border border-border p-4">
-        <h2 className="text-3xl">Second Drawer</h2>
-        <p className="text-sm">This is the content of the second drawer.</p>
-        <Button onClick={toggleDrawer}>Close Drawer</Button>
-      </div>
-    )
+    setDrawerContent(<Component />)
   }
 
   return (
@@ -28,5 +22,18 @@ export default function Page() {
         Open Second Drawer
       </Button>
     </section>
+  )
+}
+
+const Component = () => {
+  const { closeDrawer } = useActionDrawerStore()
+  return (
+    <div className="min-h-svh">
+      <div className="relative m-2 h-[calc(100svh_-_1rem)] w-80 space-y-4 rounded-lg border border-muted/50 bg-background p-4">
+        <h2 className="text-3xl">Second Drawer</h2>
+        <p className="text-sm">This is the content of the second drawer.</p>
+        <Button onClick={closeDrawer}>Close</Button>
+      </div>
+    </div>
   )
 }
