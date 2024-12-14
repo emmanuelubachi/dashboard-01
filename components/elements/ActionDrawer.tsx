@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Cross2Icon } from '@radix-ui/react-icons'
 import { Button, ButtonProps } from '@/components/ui/button'
@@ -20,7 +20,24 @@ const ActionDrawer = ({
   children: React.ReactNode
   from?: 'left' | 'right' | 'bottom' | 'top'
 }) => {
-  const { isDrawerOpen } = useActionDrawerStore()
+  const { isDrawerOpen, closeDrawer } = useActionDrawerStore()
+  const drawerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeDrawer()
+      }
+    }
+
+    if (isDrawerOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isDrawerOpen, closeDrawer])
 
   const directionVariants = {
     bottom: { y: '100%', opacity: 0 },
@@ -35,6 +52,7 @@ const ActionDrawer = ({
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50">
           <ActionDrawerOverlay />
           <motion.div
+            ref={drawerRef}
             className="fixed inset-0 z-50 w-fit"
             initial={directionVariants[from]}
             animate={{ x: 0, y: 0, opacity: 1 }}
@@ -55,17 +73,37 @@ const ActionDrawerTrigger = ({
   className,
   variant = 'default',
   size = 'default',
+  content = null,
 }: {
   children: React.ReactNode
   className?: string
   variant?: ButtonProps['variant']
   size?: ButtonProps['size']
+  content?: React.ReactNode
 }) => {
-  const { toggleDrawer } = useActionDrawerStore()
+  const { toggleDrawer, setDrawerContent } = useActionDrawerStore()
+
+  if (!content) {
+    return (
+      <Button
+        onClick={toggleDrawer}
+        variant={variant}
+        size={size}
+        className={cn('focus:outline-none', className)}
+      >
+        {children}
+      </Button>
+    )
+  }
+
+  const handleClick = () => {
+    setDrawerContent(content)
+    toggleDrawer()
+  }
 
   return (
     <Button
-      onClick={toggleDrawer}
+      onClick={handleClick}
       variant={variant}
       size={size}
       className={cn('focus:outline-none', className)}
@@ -100,13 +138,52 @@ const ActionDrawerContent = ({
   children: React.ReactNode
   className?: string
 }) => {
+  const contentRef = useRef<HTMLDivElement>(null)
+  const { isDrawerOpen } = useActionDrawerStore()
+
+  useEffect(() => {
+    if (isDrawerOpen && contentRef.current) {
+      const focusableElements = contentRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0] as HTMLElement
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement
+
+      const handleTabKey = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              e.preventDefault()
+              lastElement.focus()
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              e.preventDefault()
+              firstElement.focus()
+            }
+          }
+        }
+      }
+
+      firstElement.focus()
+      contentRef.current.addEventListener('keydown', handleTabKey)
+
+      return () => {
+        contentRef.current?.removeEventListener('keydown', handleTabKey)
+      }
+    }
+  }, [isDrawerOpen])
+
   return (
     <div
+      ref={contentRef}
       className={cn(
         'overflow-y-auto bg-background p-4 shadow-lg focus:outline-none',
         className
       )}
-      tabIndex={-1} // To enable focus trapping later
+      tabIndex={-1}
     >
       {children}
     </div>
@@ -169,137 +246,241 @@ export {
   ActionDrawerClose,
 }
 
-// "use client";
+// 'use client'
 
-// import React from "react";
-// import { motion, AnimatePresence } from "framer-motion";
-// import useActionDrawerStore from "@/store/useActionDrawerStore";
-// import useDeviceType from "@/hooks/useDeviceType";
-// import { cn } from "@/lib/utils";
+// import React, { useEffect, useRef } from 'react'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { Cross2Icon } from '@radix-ui/react-icons'
+// import { Button, ButtonProps } from '@/components/ui/button'
+// import useActionDrawerStore from '@/store/useActionDrawerStore'
+// import { cn } from '@/lib/utils'
+
+// const sharedButtonStyles =
+//   'gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95'
 
 // // ---- Components ----
 
 // // Root Drawer
 // const ActionDrawer = ({
 //   children,
-//   from = "left",
+//   from = 'left',
 // }: {
-//   children: React.ReactNode;
-//   from?: "left" | "right" | "bottom" | "top";
+//   children: React.ReactNode
+//   from?: 'left' | 'right' | 'bottom' | 'top'
 // }) => {
-//   const { isDrawerOpen, closeDrawer } = useActionDrawerStore();
+//   const { isDrawerOpen, closeDrawer } = useActionDrawerStore()
+//   const drawerRef = useRef<HTMLDivElement>(null)
+
+//   useEffect(() => {
+//     const handleKeyDown = (event: KeyboardEvent) => {
+//       if (event.key === 'Escape') {
+//         closeDrawer()
+//       }
+//     }
+
+//     if (isDrawerOpen) {
+//       document.addEventListener('keydown', handleKeyDown)
+//     }
+
+//     return () => {
+//       document.removeEventListener('keydown', handleKeyDown)
+//     }
+//   }, [isDrawerOpen, closeDrawer])
 
 //   const directionVariants = {
-//     bottom: { y: "100%", opacity: 0 },
-//     top: { y: "-100%", opacity: 0 },
-//     left: { x: "-100%", opacity: 0 },
-//     right: { x: "100%", opacity: 0 },
-//   };
+//     bottom: { y: '100%', opacity: 0 },
+//     top: { y: '-100%', opacity: 0 },
+//     left: { x: '-100%', opacity: 0 },
+//     right: { x: '100%', opacity: 0 },
+//   }
 
 //   return (
 //     <AnimatePresence>
 //       {isDrawerOpen && (
-//         <>
+//         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50">
 //           <ActionDrawerOverlay />
 //           <motion.div
-//             className="fixed w-fit inset-0 z-50"
+//             ref={drawerRef}
+//             className="fixed inset-0 z-50 w-fit"
 //             initial={directionVariants[from]}
 //             animate={{ x: 0, y: 0, opacity: 1 }}
 //             exit={directionVariants[from]}
-//             transition={{ type: "spring", damping: 20, stiffness: 300 }}
+//             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
 //           >
 //             {children}
 //           </motion.div>
-//         </>
+//         </div>
 //       )}
 //     </AnimatePresence>
-//   );
-// };
+//   )
+// }
 
 // // Trigger Button
 // const ActionDrawerTrigger = ({
 //   children,
 //   className,
+//   variant = 'default',
+//   size = 'default',
+//   content = null,
 // }: {
-//   children: React.ReactNode;
-//   className?: string;
+//   children: React.ReactNode
+//   className?: string
+//   variant?: ButtonProps['variant']
+//   size?: ButtonProps['size']
+//   content?: React.ReactNode
 // }) => {
-//   const { toggleDrawer } = useActionDrawerStore();
+//   const { toggleDrawer, setDrawerContent } = useActionDrawerStore()
+
+//   if (!content) {
+//     return (
+//       <Button
+//         onClick={toggleDrawer}
+//         variant={variant}
+//         size={size}
+//         className={cn('focus:outline-none', className)}
+//       >
+//         {children}
+//       </Button>
+//     )
+//   }
+
+//   const handleClick = () => {
+//     setDrawerContent(content)
+//     toggleDrawer()
+//   }
 
 //   return (
-//     <button
-//       onClick={toggleDrawer}
-//       className={cn("focus:outline-none", className)}
+//     <Button
+//       onClick={handleClick}
+//       variant={variant}
+//       size={size}
+//       className={cn('focus:outline-none', className)}
 //     >
 //       {children}
-//     </button>
-//   );
-// };
+//     </Button>
+//   )
+// }
 
 // // Overlay
 // const ActionDrawerOverlay = () => {
-//   const { closeDrawer } = useActionDrawerStore();
+//   const { closeDrawer } = useActionDrawerStore()
 
 //   return (
 //     <motion.div
-//       className="fixed inset-0 bg-black/50 z-40"
+//       className="fixed inset-0 z-40 bg-black/50"
 //       initial={{ opacity: 0 }}
 //       animate={{ opacity: 1 }}
 //       exit={{ opacity: 0 }}
 //       transition={{ duration: 0.3 }}
+//       aria-hidden="true"
 //       onClick={closeDrawer}
 //     />
-//   );
-// };
+//   )
+// }
 
 // // Content
 // const ActionDrawerContent = ({
 //   children,
-//   className = "",
+//   className = '',
 // }: {
-//   children: React.ReactNode;
-//   className?: string;
+//   children: React.ReactNode
+//   className?: string
 // }) => {
+//   const contentRef = useRef<HTMLDivElement>(null)
+//   const { isDrawerOpen } = useActionDrawerStore()
+
+//   useEffect(() => {
+//     if (isDrawerOpen && contentRef.current) {
+//       const focusableElements = contentRef.current.querySelectorAll(
+//         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+//       )
+//       const firstElement = focusableElements[0] as HTMLElement
+//       const lastElement = focusableElements[
+//         focusableElements.length - 1
+//       ] as HTMLElement
+
+//       const handleTabKey = (e: KeyboardEvent) => {
+//         if (e.key === 'Tab') {
+//           if (e.shiftKey) {
+//             if (document.activeElement === firstElement) {
+//               e.preventDefault()
+//               lastElement.focus()
+//             }
+//           } else {
+//             if (document.activeElement === lastElement) {
+//               e.preventDefault()
+//               firstElement.focus()
+//             }
+//           }
+//         }
+//       }
+
+//       firstElement.focus()
+//       contentRef.current.addEventListener('keydown', handleTabKey)
+
+//       return () => {
+//         contentRef.current?.removeEventListener('keydown', handleTabKey)
+//       }
+//     }
+//   }, [isDrawerOpen])
 //   return (
-//     <div className={`bg-background shadow-lg p-4 overflow-y-auto ${className}`}>
+//     <div
+//       ref={contentRef}
+//       className={cn(
+//         'overflow-y-auto bg-background p-4 shadow-lg focus:outline-none',
+//         className
+//       )}
+//       tabIndex={-1} // To enable focus trapping later
+//     >
 //       {children}
 //     </div>
-//   );
-// };
+//   )
+// }
 
 // // Header
 // const ActionDrawerHeader = ({
 //   children,
-//   className = "",
+//   className = '',
 // }: {
-//   children: React.ReactNode;
-//   className?: string;
+//   children: React.ReactNode
+//   className?: string
 // }) => (
-//   <div className={`p-4 font-semibold text-lg ${className}`}>{children}</div>
-// );
+//   <div className={cn('py-4 text-lg font-semibold', className)}>{children}</div>
+// )
 
 // // Footer
 // const ActionDrawerFooter = ({
 //   children,
-//   className = "",
+//   className = '',
 // }: {
-//   children: React.ReactNode;
-//   className?: string;
-// }) => <div className={`p-4 mt-auto ${className}`}>{children}</div>;
+//   children: React.ReactNode
+//   className?: string
+// }) => <div className={cn('mt-auto p-4', className)}>{children}</div>
 
 // // Close Button
-// const ActionDrawerClose = () => {
-//   const { closeDrawer } = useActionDrawerStore();
+// const ActionDrawerClose = ({
+//   className,
+//   variant = 'outline',
+//   size = 'icon',
+// }: {
+//   className?: string
+//   variant?: ButtonProps['variant']
+//   size?: ButtonProps['size']
+// }) => {
+//   const { closeDrawer } = useActionDrawerStore()
 
 //   return (
-//     <button
+//     <Button
 //       onClick={closeDrawer}
-//       className="focus:outline-none p-2 rounded-full hover:bg-gray-200"
+//       variant={variant}
+//       size={size}
+//       className={cn('focus:outline-none', sharedButtonStyles, className)}
 //     >
-//       Close
-//     </button>
-//   );
-// };
+//       <Cross2Icon className="h-4 w-4" />
+//       <span className="sr-only">Close</span>
+//     </Button>
+//   )
+// }
 
 // // ---- Export All Components ----
 // export {
@@ -310,4 +491,4 @@ export {
 //   ActionDrawerHeader,
 //   ActionDrawerFooter,
 //   ActionDrawerClose,
-// };
+// }
