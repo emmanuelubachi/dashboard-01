@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import Footer from '@/components/sections/footer'
+import { ActionDrawer } from '@/components/elements/action-drawer'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -28,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-[family-name:var(--font-geist-sans)] antialiased`}
       >
         <ThemeProvider
           attribute="class"
@@ -36,10 +37,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="font-[family-name:var(--font-geist-sans)]">
+          <>
             {children}
+            <ActionDrawer />
             <Footer />
-          </div>
+          </>
         </ThemeProvider>
       </body>
     </html>
