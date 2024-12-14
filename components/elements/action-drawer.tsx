@@ -1,204 +1,496 @@
-"use client";
-import { useCallback, ReactNode, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Filter } from "lucide-react";
-import { Cross2Icon } from "@radix-ui/react-icons";
-import { Button, ButtonProps } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import useDeviceType from "@/hooks/useDeviceType";
-import useActionDrawerStore from "@/store/useActionDrawerStore";
-import { cn } from "@/lib/utils";
+'use client'
 
-type ActionButtonProps = {
-  children?: ReactNode;
-  className?: string;
-  label?: string;
-  variant?: ButtonProps["variant"];
-  size?: ButtonProps["size"];
-};
+import React, { useCallback, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Cross2Icon } from '@radix-ui/react-icons'
+import { Button, ButtonProps } from '@/components/ui/button'
+import useActionDrawerStore from '@/store/useActionDrawerStore'
 
-type ActionTooltipProps = ActionButtonProps & {
-  tooltip: string;
-};
+import { cn } from '@/lib/utils'
 
 const sharedButtonStyles =
-  "gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95";
+  'gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95'
 
-/**
- * A button component that toggles the action drawer and sets its content
- * when clicked. It accepts various props to customize its appearance
- * and behavior.
- *
- * @param {ReactNode} children - The content to be set in the action drawer.
- * @param {string} [className] - Additional classes to style the button.
- * @param {string} [label="Button"] - The label displayed next to the action icon.
- * @param {string} [variant="default"] - The variant of the button, affecting its styling.
- * @param {string} [size="default"] - The size of the button, affecting its dimensions.
- */
-export const ActionDrawerButton: React.FC<ActionButtonProps> = ({
-  children,
+// ---- Components ----
+
+// Root Drawer
+const ActionDrawer = ({
   className,
-  label = "Button",
-  variant = "default",
-  size = "default",
+  overlay = true,
+  from = 'left',
+}: {
+  className?: string
+  overlay?: boolean
+  from?: 'left' | 'right' | 'bottom' | 'top'
 }) => {
-  const { toggleDrawer, setDrawerContent } = useActionDrawerStore();
-
-  const handleClick = useCallback(() => {
-    setDrawerContent(children);
-    toggleDrawer();
-  }, [children, setDrawerContent, toggleDrawer]);
-
-  return (
-    <Button
-      variant={variant}
-      size={size}
-      className={cn(className, sharedButtonStyles)}
-      onClick={handleClick}
-    >
-      <Filter className="h-4 w-4" />
-      <span className="text-pxs sm:text-sm">{label}</span>
-    </Button>
-  );
-};
-
-/**
- * A button component that toggles the action drawer and sets its content
- * when clicked, with an optional tooltip. It accepts various props to
- * customize its appearance and behavior.
- *
- * @param {ReactNode} children - The content to be set in the action drawer.
- * @param {string} [label=""] - The label displayed next to the action icon.
- * @param {string} [className] - Additional classes to style the button.
- * @param {string} [tooltip="Tooltip"] - The text displayed in the tooltip.
- * @param {string} [variant="default"] - The variant of the button, affecting its styling.
- * @param {string} [size="icon"] - The size of the button, affecting its dimensions.
- */
-export const ActionDrawerTooltip: React.FC<ActionTooltipProps> = ({
-  children,
-  label,
-  className,
-  tooltip = "Tooltip",
-  variant = "default",
-  size = "icon",
-}) => {
-  const { toggleDrawer, setDrawerContent } = useActionDrawerStore();
-
-  const handleClick = useCallback(() => {
-    setDrawerContent(children);
-    toggleDrawer();
-  }, [children, setDrawerContent, toggleDrawer]);
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={variant}
-            size={size}
-            className={cn(className, sharedButtonStyles)}
-            onClick={handleClick}
-          >
-            <Filter className="h-4 w-4" />
-            {label && <span className="text-pxs sm:text-sm">{label}</span>}
-            <span className="sr-only">{label}</span>
-          </Button>
-        </TooltipTrigger>
-        {tooltip && <TooltipContent side="top">{tooltip}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
-};
-
-/**
- * A component that renders a slide-in drawer on the left side of the
- * viewport when the user clicks on an action button. The drawer is
- * closed when the user clicks outside of it or presses the escape key.
- *
- * The component accepts no props and renders a drawer with a white
- * background. The drawer is positioned absolutely at the top-left of
- * the viewport and has a fixed width of 240px on desktop and 100vw on
- * mobile.
- *
- * The component uses the `useFilterStore` hook to get the current state
- * of the filter drawer and the `useDeviceType` hook to determine if the
- * user is on a mobile device. It also uses the `AnimatePresence` component
- * from Framer Motion to animate the drawer in and out.
- */
-export const ActionDrawer = () => {
-  const { isMobile } = useDeviceType();
   const { isDrawerOpen, closeDrawer, actionDrawerContent } =
-    useActionDrawerStore();
+    useActionDrawerStore()
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
 
-  const memoizedContent = useMemo(
-    () => actionDrawerContent,
-    [actionDrawerContent]
-  );
-  const handleOverlayClick = () => {
-    if (isDrawerOpen) {
-      closeDrawer();
+  useEffect(() => {
+    closeDrawer()
+  }, [pathname, closeDrawer])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeDrawer()
+      }
     }
-  };
 
-  const animationVariants = useMemo(
-    () => ({
-      initial: { x: "-100%" },
-      animate: { x: 0 },
-      exit: { x: "-100%" },
-    }),
-    []
-  );
+    if (isDrawerOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isDrawerOpen, closeDrawer])
+
+  const directionVariants = {
+    bottom: { y: '100%', opacity: 0 },
+    top: { y: '-100%', opacity: 0 },
+    left: { x: '-100%', opacity: 0 },
+    right: { x: '100%', opacity: 0 },
+  }
 
   return (
     <AnimatePresence>
       {isDrawerOpen && (
-        <>
-          {isMobile && (
-            <div
-              className="fixed inset-0 z-[35] bg-black opacity-50"
-              aria-hidden="true"
-              tabIndex={-1}
-              onClick={handleOverlayClick}
-            />
-          )}
-
+        <div role="dialog" aria-modal="true">
+          {overlay && <ActionDrawerOverlay />}
           <motion.div
-            className="fixed left-0 top-0 z-40 h-screen overflow-hidden bg-background shadow-lg sm:border-r dark:bg-background sm:py-10"
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={animationVariants}
-            transition={{
-              type: isDrawerOpen ? "tween" : "spring",
-              duration: 0.3,
-            }}
-            role="dialog"
-            aria-modal="true"
+            ref={drawerRef}
+            className={cn('fixed inset-0 z-50 w-fit', className)}
+            initial={directionVariants[from]}
+            animate={{ x: 0, y: 0, opacity: 1 }}
+            exit={directionVariants[from]}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           >
-            <div className="h-full w-64 sm:w-72">
-              <div className="flex h-full w-full flex-col gap-4">
-                {!isMobile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-3 top-3 h-4 w-4 rounded-full p-0 opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:bg-transparent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
-                    onClick={closeDrawer}
-                  >
-                    <Cross2Icon className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                  </Button>
-                )}
-                <div className="py-2 mx-auto">{memoizedContent}</div>
-              </div>
-            </div>
+            {actionDrawerContent}
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
-  );
-};
+  )
+}
+
+// Trigger Button
+const ActionDrawerTrigger = ({
+  children,
+  className,
+  variant = 'default',
+  size = 'default',
+  content = null,
+}: {
+  children: React.ReactNode
+  className?: string
+  variant?: ButtonProps['variant']
+  size?: ButtonProps['size']
+  content?: React.ReactNode
+}) => {
+  const { toggleDrawer, setDrawerContent } = useActionDrawerStore()
+
+  const handleClick = useCallback(() => {
+    if (!content) {
+      toggleDrawer()
+    }
+    setDrawerContent(content)
+    toggleDrawer()
+  }, [content, setDrawerContent, toggleDrawer])
+
+  return (
+    <Button
+      onClick={handleClick}
+      variant={variant}
+      size={size}
+      className={cn('focus:outline-none', className)}
+    >
+      {children}
+    </Button>
+  )
+}
+
+// Overlay
+const ActionDrawerOverlay = () => {
+  const { closeDrawer } = useActionDrawerStore()
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-40 bg-black/50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      aria-hidden="true"
+      onClick={closeDrawer}
+    />
+  )
+}
+
+// Content
+const ActionDrawerContent = ({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode
+  className?: string
+}) => {
+  const contentRef = useRef<HTMLDivElement>(null)
+  const { isDrawerOpen } = useActionDrawerStore()
+
+  // Focus trap
+  useEffect(() => {
+    if (isDrawerOpen && contentRef.current) {
+      const currentRef = contentRef.current // Store the current ref value
+      const focusableElements = currentRef.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0] as HTMLElement
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement
+
+      const handleTabKey = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              e.preventDefault()
+              lastElement.focus()
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              e.preventDefault()
+              firstElement.focus()
+            }
+          }
+        }
+      }
+
+      firstElement.focus()
+      currentRef.addEventListener('keydown', handleTabKey)
+
+      return () => {
+        currentRef.removeEventListener('keydown', handleTabKey)
+      }
+    }
+  }, [isDrawerOpen])
+
+  return (
+    <div
+      ref={contentRef}
+      className={cn(
+        'overflow-y-auto bg-background p-4 shadow-lg focus:outline-none',
+        className
+      )}
+      tabIndex={-1}
+    >
+      {children}
+    </div>
+  )
+}
+
+// Header
+const ActionDrawerHeader = ({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode
+  className?: string
+}) => (
+  <div className={cn('py-4 text-lg font-semibold', className)}>{children}</div>
+)
+
+// Footer
+const ActionDrawerFooter = ({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode
+  className?: string
+}) => <div className={cn('mt-auto p-4', className)}>{children}</div>
+
+// Close Button
+const ActionDrawerClose = ({
+  className,
+  variant = 'outline',
+  size = 'icon',
+}: {
+  className?: string
+  variant?: ButtonProps['variant']
+  size?: ButtonProps['size']
+}) => {
+  const { closeDrawer } = useActionDrawerStore()
+
+  return (
+    <Button
+      onClick={closeDrawer}
+      variant={variant}
+      size={size}
+      className={cn('focus:outline-none', sharedButtonStyles, className)}
+    >
+      <Cross2Icon className="h-4 w-4" />
+      <span className="sr-only">Close</span>
+    </Button>
+  )
+}
+
+// ---- Export All Components ----
+export {
+  ActionDrawer,
+  ActionDrawerTrigger,
+  ActionDrawerOverlay,
+  ActionDrawerContent,
+  ActionDrawerHeader,
+  ActionDrawerFooter,
+  ActionDrawerClose,
+}
+
+// 'use client'
+
+// import React, { useEffect, useRef } from 'react'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { Cross2Icon } from '@radix-ui/react-icons'
+// import { Button, ButtonProps } from '@/components/ui/button'
+// import useActionDrawerStore from '@/store/useActionDrawerStore'
+// import { cn } from '@/lib/utils'
+
+// const sharedButtonStyles =
+//   'gap-2 rounded-lg shadow-lg transition-all duration-300 active:scale-95'
+
+// // ---- Components ----
+
+// // Root Drawer
+// const ActionDrawer = ({
+//   children,
+//   from = 'left',
+// }: {
+//   children: React.ReactNode
+//   from?: 'left' | 'right' | 'bottom' | 'top'
+// }) => {
+//   const { isDrawerOpen, closeDrawer } = useActionDrawerStore()
+//   const drawerRef = useRef<HTMLDivElement>(null)
+
+//   useEffect(() => {
+//     const handleKeyDown = (event: KeyboardEvent) => {
+//       if (event.key === 'Escape') {
+//         closeDrawer()
+//       }
+//     }
+
+//     if (isDrawerOpen) {
+//       document.addEventListener('keydown', handleKeyDown)
+//     }
+
+//     return () => {
+//       document.removeEventListener('keydown', handleKeyDown)
+//     }
+//   }, [isDrawerOpen, closeDrawer])
+
+//   const directionVariants = {
+//     bottom: { y: '100%', opacity: 0 },
+//     top: { y: '-100%', opacity: 0 },
+//     left: { x: '-100%', opacity: 0 },
+//     right: { x: '100%', opacity: 0 },
+//   }
+
+//   return (
+//     <AnimatePresence>
+//       {isDrawerOpen && (
+//         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50">
+//           <ActionDrawerOverlay />
+//           <motion.div
+//             ref={drawerRef}
+//             className="fixed inset-0 z-50 w-fit"
+//             initial={directionVariants[from]}
+//             animate={{ x: 0, y: 0, opacity: 1 }}
+//             exit={directionVariants[from]}
+//             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+//           >
+//             {children}
+//           </motion.div>
+//         </div>
+//       )}
+//     </AnimatePresence>
+//   )
+// }
+
+// // Trigger Button
+// const ActionDrawerTrigger = ({
+//   children,
+//   className,
+//   variant = 'default',
+//   size = 'default',
+//   content = null,
+// }: {
+//   children: React.ReactNode
+//   className?: string
+//   variant?: ButtonProps['variant']
+//   size?: ButtonProps['size']
+//   content?: React.ReactNode
+// }) => {
+//   const { toggleDrawer, setDrawerContent } = useActionDrawerStore()
+
+//   if (!content) {
+//     return (
+//       <Button
+//         onClick={toggleDrawer}
+//         variant={variant}
+//         size={size}
+//         className={cn('focus:outline-none', className)}
+//       >
+//         {children}
+//       </Button>
+//     )
+//   }
+
+//   const handleClick = () => {
+//     setDrawerContent(content)
+//     toggleDrawer()
+//   }
+
+//   return (
+//     <Button
+//       onClick={handleClick}
+//       variant={variant}
+//       size={size}
+//       className={cn('focus:outline-none', className)}
+//     >
+//       {children}
+//     </Button>
+//   )
+// }
+
+// // Overlay
+// const ActionDrawerOverlay = () => {
+//   const { closeDrawer } = useActionDrawerStore()
+
+//   return (
+//     <motion.div
+//       className="fixed inset-0 z-40 bg-black/50"
+//       initial={{ opacity: 0 }}
+//       animate={{ opacity: 1 }}
+//       exit={{ opacity: 0 }}
+//       transition={{ duration: 0.3 }}
+//       aria-hidden="true"
+//       onClick={closeDrawer}
+//     />
+//   )
+// }
+
+// // Content
+// const ActionDrawerContent = ({
+//   children,
+//   className = '',
+// }: {
+//   children: React.ReactNode
+//   className?: string
+// }) => {
+//   const contentRef = useRef<HTMLDivElement>(null)
+//   const { isDrawerOpen } = useActionDrawerStore()
+
+//   useEffect(() => {
+//     if (isDrawerOpen && contentRef.current) {
+//       const focusableElements = contentRef.current.querySelectorAll(
+//         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+//       )
+//       const firstElement = focusableElements[0] as HTMLElement
+//       const lastElement = focusableElements[
+//         focusableElements.length - 1
+//       ] as HTMLElement
+
+//       const handleTabKey = (e: KeyboardEvent) => {
+//         if (e.key === 'Tab') {
+//           if (e.shiftKey) {
+//             if (document.activeElement === firstElement) {
+//               e.preventDefault()
+//               lastElement.focus()
+//             }
+//           } else {
+//             if (document.activeElement === lastElement) {
+//               e.preventDefault()
+//               firstElement.focus()
+//             }
+//           }
+//         }
+//       }
+
+//       firstElement.focus()
+//       contentRef.current.addEventListener('keydown', handleTabKey)
+
+//       return () => {
+//         contentRef.current?.removeEventListener('keydown', handleTabKey)
+//       }
+//     }
+//   }, [isDrawerOpen])
+//   return (
+//     <div
+//       ref={contentRef}
+//       className={cn(
+//         'overflow-y-auto bg-background p-4 shadow-lg focus:outline-none',
+//         className
+//       )}
+//       tabIndex={-1} // To enable focus trapping later
+//     >
+//       {children}
+//     </div>
+//   )
+// }
+
+// // Header
+// const ActionDrawerHeader = ({
+//   children,
+//   className = '',
+// }: {
+//   children: React.ReactNode
+//   className?: string
+// }) => (
+//   <div className={cn('py-4 text-lg font-semibold', className)}>{children}</div>
+// )
+
+// // Footer
+// const ActionDrawerFooter = ({
+//   children,
+//   className = '',
+// }: {
+//   children: React.ReactNode
+//   className?: string
+// }) => <div className={cn('mt-auto p-4', className)}>{children}</div>
+
+// // Close Button
+// const ActionDrawerClose = ({
+//   className,
+//   variant = 'outline',
+//   size = 'icon',
+// }: {
+//   className?: string
+//   variant?: ButtonProps['variant']
+//   size?: ButtonProps['size']
+// }) => {
+//   const { closeDrawer } = useActionDrawerStore()
+
+//   return (
+//     <Button
+//       onClick={closeDrawer}
+//       variant={variant}
+//       size={size}
+//       className={cn('focus:outline-none', sharedButtonStyles, className)}
+//     >
+//       <Cross2Icon className="h-4 w-4" />
+//       <span className="sr-only">Close</span>
+//     </Button>
+//   )
+// }
+
+// // ---- Export All Components ----
+// export {
+//   ActionDrawer,
+//   ActionDrawerTrigger,
+//   ActionDrawerOverlay,
+//   ActionDrawerContent,
+//   ActionDrawerHeader,
+//   ActionDrawerFooter,
+//   ActionDrawerClose,
+// }
