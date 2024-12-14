@@ -1,3 +1,5 @@
+'use client'
+import { motion as m } from 'framer-motion'
 import {
   ActionDrawerClose,
   ActionDrawerContent,
@@ -8,16 +10,19 @@ import {
 export default function Home() {
   return (
     <main className="m-auto flex min-h-screen w-full items-center justify-center">
-      <div className="flex gap-4">
-        {/* Trigger via Button */}
-
+      {/* Trigger via Button */}
+      <m.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <ActionDrawerTrigger
           className="rounded px-4 py-2"
           content={<FirstDrawerContent />}
         >
           Open First Drawer
         </ActionDrawerTrigger>
-      </div>
+      </m.div>
     </main>
   )
 }
